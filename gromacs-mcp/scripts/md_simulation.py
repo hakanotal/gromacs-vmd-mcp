@@ -43,6 +43,7 @@ from lib.gromacs_utils import (
     get_file_size,
     parse_mdlog_progress,
     read_tpr_nsteps,
+    unsafe_argv_path,
     resolve_in_workdir,
     run_command_full,
     summarize_gmx_error,
@@ -115,6 +116,10 @@ def install_stop_handler() -> None:
 def _run_mdrun(cmd: List[str], cwd: Path, timeout: Optional[int], out_file: Path) -> Dict[str, Any]:
     """Run mdrun with stdout and stderr streamed to a file (long runs do not buffer in memory)."""
     logger.info("Command: %s", " ".join(cmd))
+    unsafe = unsafe_argv_path(cmd)
+    if unsafe:
+        out_file.write_text("Error in user input:\n" + unsafe + "\n")
+        return {"returncode": 1, "timed_out": False}
     timed_out = False
     with open(out_file, "w") as fh:
         proc = subprocess.Popen(cmd, cwd=str(cwd), stdout=fh, stderr=subprocess.STDOUT, text=True,

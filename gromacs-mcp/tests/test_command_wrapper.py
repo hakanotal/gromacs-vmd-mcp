@@ -137,6 +137,47 @@ class TestNoShell:
         argv = fake_gmx.calls()[0]
         assert argv[argv.index("-f") + 1:argv.index("-f") + 3] == [str(a), str(b)]
 
+    def test_every_command_is_checked_in_one_place(self, fake_gmx, tmp_path):
+        # tools that run gmx directly (grompp, minimization, workflows) go through run_command_full
+        from lib.gromacs_utils import find_gromacs_command, run_command_full
+        r = run_command_full(find_gromacs_command() + ["grompp", "-c", str(tmp_path / "a$(id).gro")])
+        assert r["success"] is False and "not allowed" in r["stderr"]
+        r = run_command_full(find_gromacs_command() + ["grompp", "-c", "conf;id.gro"])
+        assert r["success"] is False
+        assert fake_gmx.calls() == []
+
+    def test_prep_tools_and_workflows_refuse_shell_active_names(self, fake_gmx, tmp_path):
+        from tools import prep
+        from gromacs_workflow import run_gromacs_workflow
+        from md_simulation import run_md_simulation
+        bad = tmp_path / "x$(touch PWNED).gro"
+        bad.write_text("x")
+        top, mdp = tmp_path / "t.top", tmp_path / "m.mdp"
+        top.write_text("x"); mdp.write_text("integrator = steep\n")
+        assert prep.run_grompp(str(mdp), str(bad), str(top), output_tpr=str(tmp_path / "o.tpr"))["status"] == "error"
+        assert prep.run_minimization(str(bad), str(top), output_dir=str(tmp_path / "em"))["status"] == "error"
+        assert prep.validate_mdp(mdp_file=str(mdp), structure=str(bad), topology=str(top))["status"] == "error"
+        wf = run_gromacs_workflow("simple_md", {"structure": bad, "topology": top, "mdp": mdp}, tmp_path / "wf")
+        assert wf["result"] is False and "not allowed" in wf["error"]
+        tpr = tmp_path / "r$(id).tpr"
+        tpr.write_bytes(b"x")
+        md = run_md_simulation(tpr, tmp_path / "run", nsteps=10)  # convert-tpr -s <input>
+        assert md["result"] is False and "not allowed" in md["error"]
+        assert fake_gmx.calls() == [] and not (tmp_path / "PWNED").exists()
+        # without nsteps the input is copied to md.tpr first, so its name never reaches gmx
+        run_md_simulation(tpr, tmp_path / "run2")
+        assert fake_gmx.calls() and all("$(id)" not in " ".join(c) for c in fake_gmx.calls())
+
+    @pytest.mark.parametrize("extra", [["--f", "x.mdp"], ["-F", "x.mdp"], ["-imd", "x.gro"], ["--maxwarn", "9"]])
+    def test_run_grompp_file_options_in_any_spelling(self, fake_gmx, tmp_path, extra):
+        from tools import prep
+        for name in ("a.mdp", "a.gro", "a.top"):
+            (tmp_path / name).write_text("x")
+        r = prep.run_grompp(str(tmp_path / "a.mdp"), str(tmp_path / "a.gro"), str(tmp_path / "a.top"),
+                            output_tpr=str(tmp_path / "a.tpr"), extra_parameters=extra)
+        assert r["status"] == "error" and "named arguments" in r["error"]
+        assert fake_gmx.calls() == []
+
     def test_viewer_option_is_refused(self, fake_gmx, tmp_path):
         # -w starts a viewer through the shell with the output file name; -now (do not view) is fine
         f = tmp_path / "e.edr"
@@ -355,6 +396,8 @@ class TestSandbox:
             (sandbox / name).write_text("x")
         args = (str(sandbox / "a.mdp"), str(sandbox / "a.gro"), str(sandbox / "a.top"))
         r = run_grompp(*args, output_tpr=str(sandbox / "o.tpr"), extra_parameters=["-pp", str(tmp_path / "leak.top")])
+        assert r["status"] == "error" and "named arguments" in r["error"]  # grompp file options never pass
+        r = run_grompp(*args, output_tpr=str(sandbox / "o.tpr"), extra_parameters=["-sel", str(tmp_path / "leak.dat")])
         assert r["status"] == "error" and "outside" in r["error"]
         r = run_grompp(*args, output_tpr=str(sandbox / "o.tpr"), extra_parameters=["-o", str(sandbox / "x.tpr")])
         assert r["status"] == "error" and "named arguments" in r["error"]

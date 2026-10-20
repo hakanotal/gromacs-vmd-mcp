@@ -22,6 +22,11 @@ BAD_CALLS = {
     "rmsd_over_trajectory": {"structure": NONEXISTENT, "trajectory": NONEXISTENT},
     "contacts_over_trajectory": {"structure": NONEXISTENT, "trajectory": NONEXISTENT,
                                  "selection1": "protein", "selection2": "water"},
+    "render_movie": {"structure": NONEXISTENT, "trajectory": NONEXISTENT},
+    "radius_of_gyration_over_trajectory": {"structure": NONEXISTENT, "trajectory": NONEXISTENT},
+    "sasa_over_trajectory": {"structure": NONEXISTENT, "trajectory": NONEXISTENT},
+    "hbonds_over_trajectory": {"structure": NONEXISTENT, "trajectory": NONEXISTENT},
+    "secondary_structure_over_trajectory": {"structure": NONEXISTENT, "trajectory": NONEXISTENT},
     "launch_vmd_gui": {"structure": NONEXISTENT},
     "list_vmd_sessions": {},
     "close_vmd_session": {"pid": 1},
@@ -73,6 +78,17 @@ class TestFindVmd:
         monkeypatch.setattr("vmd.os.access", lambda p, mode: False)
         with pytest.raises(Exception, match="Tried: .*VMD_MCP_VMD.*vmd on PATH"):
             find_vmd()
+
+    @pytest.mark.parametrize("installed", ["C:/Program Files/University of Illinois/VMD/vmd.exe",
+                                           "/opt/vmd-1.9.4/bin/vmd", "/usr/local/bin/vmd"])
+    def test_standard_install_locations(self, monkeypatch, tmp_path, installed):
+        monkeypatch.setenv("VMD_MCP_VMD", str(tmp_path / "nope"))
+        monkeypatch.setenv("PATH", "/nonexistent")
+        monkeypatch.setattr("vmd.glob.glob", lambda pattern: [installed] if pattern.rstrip("*") in installed
+                            or pattern.replace("*", "-1.9.4") == installed else [])
+        monkeypatch.setattr("vmd.os.path.isfile", lambda p: p == installed)
+        monkeypatch.setattr("vmd.os.access", lambda p, mode: p == installed)
+        assert find_vmd() == [installed]
 
     def test_environment_check(self, fake_vmd):
         r = server.check_vmd_environment()
@@ -193,8 +209,10 @@ class TestRender:
         r = server.render_image(str(s), str(t), output_file=str(tmp_path / "img.tga"), style="protein_cartoon",
                                 frame=3)
         assert r["status"] == "success" and r["format"] == "tga" and Path(r["output_file"]).exists()
-        assert fake_vmd.calls()[0]["argv"][6:] == [str(s), str(t), "3", "protein", "NewCartoon", "Structure",
-                                                   str(tmp_path / "img.tga")]
+        # no tachyon here: VMD's internal renderer at 512 x 512, with a warning
+        assert (r["width"], r["height"]) == (512, 512) and any("512 x 512" in w for w in r["warnings"])
+        assert fake_vmd.calls()[0]["argv"][6:] == [str(s), str(t), "3", "internal", "0.7", str(tmp_path / "img.tga"),
+                                                   "protein", "NewCartoon", "Structure"]
 
     def test_png_needs_pillow(self, fake_vmd, files, tmp_path):
         s, _ = files
@@ -214,7 +232,6 @@ class TestRender:
 class TestSessionsAndTcl:
     def test_launch_list_close(self, fake_vmd, files, monkeypatch):
         s, t = files
-        monkeypatch.setenv("FAKE_VMD_SLEEP", "30")
         r = server.launch_vmd_gui(str(s), str(t))
         assert r["status"] == "success"
         for _ in range(50):
@@ -222,6 +239,8 @@ class TestSessionsAndTcl:
                 break
             time.sleep(0.1)
         assert fake_vmd.calls()[0]["argv"] == ["-f", str(s), str(t)]
+        time.sleep(0.5)
+        # a closed stdin made the real VMD quit at once; the session must still be running
         listed = server.list_vmd_sessions()["sessions"]
         assert [x["pid"] for x in listed if x["running"]] == [r["pid"]]
         assert server.close_vmd_session(r["pid"])["status"] == "success"
@@ -239,3 +258,148 @@ class TestSessionsAndTcl:
         monkeypatch.setenv("VMD_MCP_ALLOW_TCL", "1")
         r = server.run_vmd_tcl("puts hello")
         assert r["status"] == "success" and "puts hello" in fake_vmd.calls()[0]["script"]
+
+
+class TestRenderSizesAndScenes:
+    def test_tachyon_renders_at_the_requested_size(self, fake_vmd, fake_tachyon, files, tmp_path):
+        s, t = files
+        out = tmp_path / "wide.tga"
+        r = server.render_image(str(s), str(t), output_file=str(out), width=640, height=360)
+        assert r["status"] == "success" and (r["width"], r["height"]) == (640, 360) and r["warnings"] == []
+        vmd_args = fake_vmd.calls()[0]["argv"][6:]
+        assert vmd_args[3:6] == ["scene", "0.7", str(out.with_suffix(".scene.dat"))]
+        tach = fake_tachyon.calls()[0]
+        assert tach[1:4] == ["-res", "640", "360"] and tach[tach.index("-o") + 1] == str(out)
+        assert not out.with_suffix(".scene.dat").exists()  # the scene file is removed
+
+    def test_tall_images_zoom_out(self, fake_vmd, fake_tachyon, files, tmp_path):
+        # tachyon keeps the vertical field of view, so a tall image needs a smaller zoom to fit
+        s, _ = files
+        server.render_image(str(s), output_file=str(tmp_path / "tall.tga"), width=300, height=600)
+        assert fake_vmd.calls()[0]["argv"][6 + 4] == "0.35"
+
+    def test_several_representations(self, fake_vmd, files, tmp_path):
+        s, _ = files
+        reps = [{"selection": "protein", "representation": "NewCartoon", "coloring": "Structure"},
+                {"selection": "resname LIG", "representation": "Licorice"}]
+        r = server.render_image(str(s), output_file=str(tmp_path / "x.tga"), representations=reps)
+        assert r["status"] == "success"
+        assert fake_vmd.calls()[0]["argv"][12:] == ["protein", "NewCartoon", "Structure",
+                                                    "resname LIG", "Licorice", "Name"]
+
+    def test_style_with_two_representations(self, fake_vmd, files, tmp_path):
+        s, _ = files
+        server.render_image(str(s), output_file=str(tmp_path / "x.tga"), style="protein_ligand")
+        assert fake_vmd.calls()[0]["argv"][12:15] == ["protein", "NewCartoon", "Structure"]
+        assert len(fake_vmd.calls()[0]["argv"][12:]) == 6
+
+    @pytest.mark.parametrize("reps, message", [
+        ([{"selection": "a[exec id]"}], "not a plain VMD atom selection"),
+        ([{"representation": "Lines;quit"}], "representation must be one of"),
+        ([{"selection": "all", "color": "Name"}], "unknown keys"),
+        ([{"selection": "all"}] * 9, "At most 8"),
+        (["all"], "must be an object"),
+    ])
+    def test_representation_lists_are_checked(self, fake_vmd, files, reps, message):
+        s, _ = files
+        r = server.render_image(str(s), representations=reps)
+        assert r["status"] == "error" and message in r["error"]
+        assert fake_vmd.calls() == []
+
+    def test_style_and_representations_together_is_an_error(self, fake_vmd, files):
+        s, _ = files
+        r = server.render_image(str(s), style="all_lines", representations=[{"selection": "all"}])
+        assert "either style or representations" in r["error"]
+
+    def test_size_limits(self, fake_vmd, files):
+        s, _ = files
+        assert "between 16 and 4096" in server.render_image(str(s), width=5)["error"]
+
+
+class TestMovie:
+    def test_frames_rendered_and_assembled(self, fake_vmd, fake_tachyon, fake_ffmpeg, files, tmp_path):
+        s, t = files
+        out = tmp_path / "m" / "run.mp4"
+        r = server.render_movie(str(s), str(t), output_file=str(out), style="all_lines", stride=2,
+                                rotate_degrees=2, width=321, height=240, fps=10)
+        assert r["status"] == "success", r
+        assert r["n_frames"] == 3 and r["output_file"] == str(out) and out.exists()
+        vmd_args = fake_vmd.calls()[0]["argv"][6:]
+        assert vmd_args[2:8] == ["0", "-1", "2", "2.0", "300", "scene"]
+        assert len(fake_tachyon.calls()) == 3 and fake_tachyon.calls()[0][2:4] == ["322", "240"]  # even width
+        ff = fake_ffmpeg.calls()[0]
+        assert ff[ff.index("-framerate") + 1] == "10" and "frame_%05d.tga" in ff and ff[-1] == str(out)
+        assert not list(Path(r["frames_dir"]).glob("*.dat"))
+
+    def test_without_ffmpeg_the_frames_are_returned(self, fake_vmd, fake_tachyon, files, tmp_path):
+        s, t = files
+        r = server.render_movie(str(s), str(t), output_file=str(tmp_path / "m.mp4"))
+        assert r["status"] == "success" and r["output_file"] == r["frames_dir"] and len(r["output_files"]) == 3
+        assert any("ffmpeg not found" in w for w in r["warnings"])
+
+    def test_frame_cap_is_reported(self, fake_vmd, fake_tachyon, files, tmp_path, monkeypatch):
+        s, t = files
+        monkeypatch.setenv("FAKE_VMD_TRUNCATED", "1")
+        r = server.render_movie(str(s), str(t), output_file=str(tmp_path / "m.mp4"), max_frames=3)
+        assert any("max_frames=3" in w for w in r["warnings"])
+
+    @pytest.mark.parametrize("kwargs, message", [
+        ({"max_frames": 5000}, "max_frames must be between 1 and 2000"),
+        ({"stride": 0}, "stride must be 1 or more"),
+        ({"fps": 0}, "fps must be between"),
+        ({"output_file": "/tmp/x.gif"}, "must end in .mp4"),
+    ])
+    def test_inputs_are_checked(self, fake_vmd, files, kwargs, message):
+        s, t = files
+        r = server.render_movie(str(s), str(t), **kwargs)
+        assert r["status"] == "error" and message in r["error"]
+        assert fake_vmd.calls() == []
+
+
+class TestMoreAnalyses:
+    def test_radius_of_gyration(self, fake_vmd, files):
+        s, t = files
+        r = server.radius_of_gyration_over_trajectory(str(s), str(t), selection="protein and backbone")
+        assert r["status"] == "success" and r["rgyr"] == [[0.0, 10.5], [1.0, 11.0]] and r["final"] == 11.0
+        assert fake_vmd.calls()[0]["argv"][8] == "protein and backbone"
+
+    def test_sasa_with_and_without_restriction(self, fake_vmd, files):
+        s, t = files
+        r = server.sasa_over_trajectory(str(s), str(t))
+        assert r["status"] == "success" and r["mean"] == 1190.0 and r["unit"] == "Angstrom^2"
+        assert fake_vmd.calls()[0]["argv"][9:11] == ["1.4", "none"]
+        server.sasa_over_trajectory(str(s), str(t), restrict_to="resid 1 to 5", probe_radius=1.2)
+        assert fake_vmd.calls()[1]["argv"][9:11] == ["1.2", "resid 1 to 5"]
+        assert "restrict_to" in server.sasa_over_trajectory(str(s), str(t), restrict_to="x[1]")["error"]
+
+    def test_hbonds(self, fake_vmd, files):
+        s, t = files
+        r = server.hbonds_over_trajectory(str(s), str(t), "protein", "water", distance=3.5, angle=30)
+        assert r["status"] == "success" and r["hbonds"] == [[0.0, 3.0], [1.0, 4.0]]
+        assert fake_vmd.calls()[0]["argv"][8:12] == ["protein", "water", "3.5", "30.0"]
+        assert "distance must be" in server.hbonds_over_trajectory(str(s), str(t), distance=9)["error"]
+
+    def test_secondary_structure(self, fake_vmd, files):
+        s, t = files
+        r = server.secondary_structure_over_trajectory(str(s), str(t))
+        assert r["status"] == "success" and r["n_frames"] == 2 and r["n_residues"] == 6
+        assert r["per_frame"][1] == [1, "CHHHEC"] and r["final"] == "CHHHEC"
+        assert r["fractions"][0] == {"helix": 0.6667, "sheet": 0.0, "turn": 0.0, "coil": 0.3333}
+        assert r["mean_fractions"]["sheet"] == pytest.approx(0.0833, abs=1e-4)
+
+
+class TestPrompt:
+    def test_prompt_names_only_real_tools(self):
+        text = server.visualize_md_run("a.gro", "a.xtc")
+        named = set(re.findall(r"\b([a-z]+(?:_[a-z]+)+)\b", text))
+        tools = tool_names()
+        assert {"render_image", "render_movie", "rmsd_over_trajectory"} <= named
+        assert {n for n in named if n.endswith(("_trajectory", "_image", "_movie", "_environment"))} <= tools
+
+
+class TestZoom:
+    def test_zoom_multiplies_the_fit(self, fake_vmd, files, tmp_path):
+        s, _ = files
+        server.render_image(str(s), output_file=str(tmp_path / "x.tga"), zoom=2)
+        assert fake_vmd.calls()[0]["argv"][6 + 4] == "1.4"
+        assert "zoom must be between" in server.render_image(str(s), zoom=50)["error"]

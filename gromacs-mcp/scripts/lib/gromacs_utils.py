@@ -81,6 +81,42 @@ def find_gromacs_command() -> List[str]:
     )
 
 
+# gmx reads compressed files through `gunzip -c < name` in a shell (and falls back to name.gz when name
+# is missing), so file names must not carry characters the shell acts on, nor be compressed files.
+_SHELL_ACTIVE = set("$`;&|<>\n\r")
+
+
+def check_shell_safe_path(path: Union[str, Path]) -> None:
+    text = str(path)
+    bad = sorted(_SHELL_ACTIVE.intersection(text))
+    if bad:
+        raise ValueError(f"File name {text!r} contains {' '.join(repr(c) for c in bad)}; GROMACS may pass file "
+                         "names to a shell, so these characters are not allowed")
+    if text.lower().endswith((".gz", ".z")):
+        raise ValueError(f"Compressed file {text!r}: GROMACS opens these through a shell; decompress it first")
+
+
+FILE_SUFFIXES = (".xvg", ".xtc", ".trr", ".gro", ".pdb", ".tpr", ".edr", ".ndx", ".top", ".itp", ".mdp",
+                  ".log", ".cpt", ".dat", ".txt", ".xpm", ".eps", ".png", ".csv", ".g96", ".tng", ".mtx")
+
+
+def unsafe_argv_path(cmd: List[str]) -> Optional[str]:
+    """
+    The first argument that looks like a file name (a slash, or a GROMACS or compressed suffix) and
+    is not shell safe, with the reason; None when all are fine. run_command_full applies this to
+    every command, so every tool and workflow that passes paths to gmx is covered in one place.
+    """
+    for arg in cmd[1:]:
+        if arg.startswith("-") and not arg.startswith(("-/", "-.")):
+            continue
+        if "/" in arg or os.sep in arg or arg.lower().endswith(FILE_SUFFIXES + (".gz", ".z")):
+            try:
+                check_shell_safe_path(arg)
+            except ValueError as e:
+                return str(e)
+    return None
+
+
 def run_command_full(
     cmd: List[str],
     working_dir: Optional[PathLike] = None,
@@ -102,6 +138,10 @@ def run_command_full(
         dict with success, returncode, stdout, stderr, command, timed_out
     """
     cmd = [str(c) for c in cmd]
+    unsafe = unsafe_argv_path(cmd)
+    if unsafe:
+        return {"success": False, "returncode": None, "stdout": "", "stderr": "Error in user input:\n" + unsafe,
+                "command": " ".join(cmd), "timed_out": False}
     # gmx -w opens results in a viewer through the shell (GMX_VIEW_*, xmgrace); never give it a display
     run_env = {k: v for k, v in os.environ.items() if k != "DISPLAY" and not k.startswith("GMX_VIEW_")}
     run_env.update(env or {})

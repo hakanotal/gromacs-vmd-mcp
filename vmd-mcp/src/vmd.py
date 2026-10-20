@@ -136,11 +136,53 @@ def check_choice(value: str, allowed: tuple, label: str) -> str:
     return value
 
 
+MAX_REPRESENTATIONS = 8
+
+
+def check_representations(reps: List[Dict[str, Any]]) -> List[str]:
+    """Validate [{selection, representation, coloring}, ...] and flatten it to $argv triples."""
+    if not reps:
+        raise ValueError("At least one representation is needed")
+    if len(reps) > MAX_REPRESENTATIONS:
+        raise ValueError(f"At most {MAX_REPRESENTATIONS} representations")
+    flat: List[str] = []
+    for i, r in enumerate(reps, start=1):
+        if not isinstance(r, dict):
+            raise ValueError(f"representation {i} must be an object with selection, representation, coloring")
+        unknown = set(r) - {"selection", "representation", "coloring"}
+        if unknown:
+            raise ValueError(f"representation {i} has unknown keys: {', '.join(sorted(unknown))}")
+        flat += [check_selection(r.get("selection", "all"), f"representation {i} selection"),
+                 check_choice(r.get("representation", "Lines"), REPRESENTATIONS, f"representation {i} representation"),
+                 check_choice(r.get("coloring", "Name"), COLORINGS, f"representation {i} coloring")]
+    return flat
+
+
+def check_image_size(width: int, height: int) -> None:
+    if not (16 <= int(width) <= 4096 and 16 <= int(height) <= 4096):
+        raise ValueError("width and height must be between 16 and 4096 pixels")
+
+
+def fit_zoom(width: int, height: int) -> float:
+    """Zoom that keeps a resetview scene inside a width x height image. Tachyon keeps the vertical field of
+    view when the resolution changes, so tall images must zoom out by width/height; 0.7 leaves a margin
+    (resetview fits atom centers, not their radii)."""
+    return round(0.7 * min(1.0, width / height), 4)
+
+
 # ==============================================================================
 # Finding and running VMD
 # ==============================================================================
+_WINDOWS_PATTERNS = (
+    "C:/Program Files/University of Illinois/VMD/vmd.exe",
+    "C:/Program Files (x86)/University of Illinois/VMD/vmd.exe",
+    "C:/Program Files/VMD*/vmd.exe",
+)
+
+
 def find_vmd() -> List[str]:
-    """argv prefix for vmd. Order: $VMD_MCP_VMD, vmd on PATH, VMD.app on macOS (VMD 2, then 1.9), /usr/local/bin/vmd."""
+    """argv prefix for vmd. Order: $VMD_MCP_VMD, vmd on PATH, VMD.app on macOS (VMD 2, then 1.9),
+    /usr/local/bin/vmd and /opt/vmd*/bin/vmd on Linux, the VMD installer's folders on Windows."""
     tried = []
     explicit = os.environ.get("VMD_MCP_VMD")
     if explicit:
@@ -160,11 +202,55 @@ def find_vmd() -> List[str]:
         apps = sorted(p for p in glob.glob(pattern) if os.access(p, os.X_OK))
         if apps:
             return [apps[-1]]
-    tried.append("/usr/local/bin/vmd")
-    if os.access("/usr/local/bin/vmd", os.X_OK):
-        return ["/usr/local/bin/vmd"]
+    # Linux tarball installs (`make install` puts a launcher in /usr/local/bin) and the Windows installer
+    for pattern in ("/usr/local/bin/vmd", "/opt/vmd*/bin/vmd", *_WINDOWS_PATTERNS):
+        tried.append(pattern)
+        found = sorted(p for p in glob.glob(pattern) if os.path.isfile(p) and os.access(p, os.X_OK))
+        if found:
+            return [found[-1]]
     raise VMDNotFoundError("Could not find VMD. Tried: " + "; ".join(tried)
                            + ". Install VMD or set VMD_MCP_VMD to the vmd executable.")
+
+
+def find_tachyon(vmd: Optional[List[str]] = None) -> Optional[str]:
+    """
+    The external Tachyon renderer, which honors an image size (-res). Order: $VMD_MCP_TACHYON, the
+    tachyon_* binary VMD ships next to its own binary (or in /usr/local/lib/vmd for the Linux launcher),
+    then tachyon on PATH. None when there is none: rendering then falls back to 512 x 512.
+    """
+    explicit = os.environ.get("VMD_MCP_TACHYON")
+    if explicit:
+        return explicit if Path(explicit).is_file() else shutil.which(explicit)
+    folders = []
+    if vmd:
+        folders.append(Path(vmd[0]).resolve().parent)
+    folders.append(Path("/usr/local/lib/vmd"))
+    for folder in folders:
+        found = sorted(p for p in glob.glob(str(folder / "tachyon_*")) if os.access(p, os.X_OK))
+        if found:
+            return found[-1]
+    return shutil.which("tachyon")
+
+
+def find_ffmpeg() -> Optional[str]:
+    explicit = os.environ.get("VMD_MCP_FFMPEG")
+    if explicit:
+        return explicit if Path(explicit).is_file() else shutil.which(explicit)
+    return shutil.which("ffmpeg")
+
+
+def run_tachyon(tachyon: str, scene: Path, out: Path, width: int, height: int,
+                timeout: Optional[int] = None) -> Dict[str, Any]:
+    """Render a VMD scene file with Tachyon at width x height to a TGA (argv, no shell)."""
+    cmd = [tachyon, str(scene), "-res", str(int(width)), str(int(height)), "-aasamples", "4",
+           "-format", "TARGA", "-o", str(out)]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                              timeout=timeout or int(os.environ.get("VMD_MCP_TIMEOUT", 600)))
+        ok = proc.returncode == 0 and out.exists()
+        return {"success": ok, "command": " ".join(cmd), "stderr": _tail(proc.stderr or proc.stdout, 10)}
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return {"success": False, "command": " ".join(cmd), "stderr": str(e)}
 
 
 def vmd_env(vmd: List[str]) -> Dict[str, str]:

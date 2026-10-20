@@ -32,6 +32,8 @@ claude mcp add gromacs -- docker run -i --rm --user `id -u`:`id -g` -v `pwd`:`pw
 
 ## Quick start without Docker
 
+Linux and Windows (WSL2) instructions, and client configuration files, are in [SETUP.md](../SETUP.md).
+
 You need Python 3.10+ and GROMACS. If `gmx` is already installed (Homebrew, a cluster module, a system package), the setup script only creates the Python environment. Otherwise it installs GROMACS from conda-forge when conda or mamba is available.
 
 ```bash

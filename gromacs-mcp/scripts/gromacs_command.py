@@ -28,6 +28,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from lib.gromacs_utils import (
+    FILE_SUFFIXES as _FILE_SUFFIXES,
+    check_shell_safe_path,
     PathNotAllowedError,
     check_file_exists,
     check_grompp_includes,
@@ -147,20 +149,9 @@ def _validate_flag(flag: str) -> None:
 # parameters and as file option names alike.
 FORBIDDEN_OPTIONS = frozenset({"exec", "w"})
 
-# gmx reads compressed files through `gunzip -c < name` in a shell (and falls back to name.gz when name
-# is missing), so file names must not carry characters the shell acts on, nor be compressed files.
-_SHELL_ACTIVE = set("$`;&|<>\n\r")
-
-
-def check_shell_safe_path(path: Union[str, Path]) -> None:
-    text = str(path)
-    bad = sorted(_SHELL_ACTIVE.intersection(text))
-    if bad:
-        raise ValueError(f"File name {text!r} contains {' '.join(repr(c) for c in bad)}; GROMACS may pass file "
-                         "names to a shell, so these characters are not allowed")
-    if text.lower().endswith((".gz", ".z")):
-        raise ValueError(f"Compressed file {text!r}: GROMACS opens these through a shell; decompress it first")
-
+# grompp's file options: they must come as named files (run_grompp) or input/output_files, so the
+# include check sees exactly what grompp will read
+GROMPP_FILE_OPTIONS = frozenset({"f", "c", "r", "rb", "n", "p", "t", "e", "ref", "imd", "qmi", "po", "pp", "o"})
 
 def check_forbidden_options(args: List[Any]) -> None:
     """Raise ValueError when an argument names a forbidden option, however many dashes or which case."""
@@ -178,8 +169,6 @@ def _validate_parameters(parameters: Optional[List[Any]]) -> List[str]:
     return out
 
 
-_FILE_SUFFIXES = (".xvg", ".xtc", ".trr", ".gro", ".pdb", ".tpr", ".edr", ".ndx", ".top", ".itp", ".mdp",
-                  ".log", ".cpt", ".dat", ".txt", ".xpm", ".eps", ".png", ".csv", ".g96", ".tng", ".mtx")
 
 
 def _check_parameter_paths(params: List[str], base: Optional[Path]) -> None:
@@ -296,9 +285,8 @@ def run_gromacs_command(
             check_shell_safe_path(path)
         _check_parameter_names(extra)
         if command_name == "grompp":
-            file_opts = {"f", "c", "r", "rb", "n", "p", "t", "e", "ref", "imd", "qmi", "po", "pp", "o"}
             given = {a.lstrip("-").lower() for a in extra if a.startswith("-")}
-            clash = sorted(given & file_opts)
+            clash = sorted(given & GROMPP_FILE_OPTIONS)
             if clash:
                 raise ValueError(f"For grompp pass files as input_files or output_files, not in parameters "
                                  f"(found: {', '.join('-' + c for c in clash)})")

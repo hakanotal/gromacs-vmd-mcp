@@ -8,7 +8,12 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from gromacs_command import _check_parameter_names, _check_parameter_paths, check_forbidden_options
+from gromacs_command import (
+    GROMPP_FILE_OPTIONS,
+    _check_parameter_names,
+    _check_parameter_paths,
+    check_forbidden_options,
+)
 from lib import mdp_templates
 from lib.gromacs_utils import (
     check_grompp_includes,
@@ -227,11 +232,13 @@ def run_grompp(
         return format_tool_result(False, error_message="maxwarn must be 0 or greater")
 
     extra = [str(x) for x in (extra_parameters or [])]
-    managed = {"-f", "-c", "-p", "-o", "-po", "-n", "-r", "-t", "-maxwarn"}
-    clash = sorted(managed.intersection(extra))
+    # compared the way gmx reads options (--f is -f), and every grompp file option, not only the named ones
+    given = {a.lstrip("-").lower() for a in extra if a.startswith("-")}
+    clash = sorted(given & (GROMPP_FILE_OPTIONS | {"maxwarn"}))
     if clash:
-        return format_tool_result(False, error_message=f"Pass {', '.join(clash)} through the named arguments, "
-                                                       "not extra_parameters")
+        return format_tool_result(False, error_message=f"Pass {', '.join('-' + c for c in clash)} through the "
+                                                       "named arguments, not extra_parameters (files grompp reads "
+                                                       "must be checked)")
     try:
         check_forbidden_options(extra)
         _check_parameter_names(extra)

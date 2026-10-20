@@ -2,6 +2,18 @@
 
 Since 2.1.0 this server lives in the `gromacs-mcp/` folder of https://github.com/hakanotal/gromacs-vmd-mcp, next to a VMD server. Earlier history: https://github.com/MacromNex/gromacs_mcp.
 
+## 2.2.0 (repository v1.1)
+
+### Security
+
+- The shell-safe file name check (no `$ \` ; & | < >` or newline, no `.gz`/`.Z`) only guarded `run_gromacs_command`. `run_grompp`, `run_minimization`, `validate_mdp`, `extend_simulation`, the workflows and the MD job script pass paths to gmx directly. The check now runs inside `run_command_full`, which every gmx call goes through, and before mdrun starts.
+- `run_grompp(extra_parameters)` compared option names as typed, so `--f` or `-F` got past it. Names are now read the way gmx reads them, and every grompp file option (`-pp`, `-imd`, `-qmi`, ...) must come through the named arguments.
+
+### Added
+
+- Started natively on Windows, the server exits with a message pointing to WSL2 or Docker (the job manager needs POSIX). It used to fail with `No module named 'fcntl'`.
+- SETUP.md at the repository root: macOS, Linux and Windows (WSL2, Docker, client configuration).
+
 ## 2.1.0
 
 Fixes everything found in the end to end water box test of 2.0.0 (TODO.md section 13) and takes on part of section 12.

@@ -13,6 +13,18 @@ from typing import List, Optional
 
 from fastmcp import FastMCP
 
+def platform_problem(platform: str = sys.platform) -> Optional[str]:
+    """The job manager needs POSIX (process groups, fcntl locks). On Windows, say what to do instead."""
+    if platform.startswith("win"):
+        return ("gromacs-mcp runs on Linux and macOS. On Windows, run it inside WSL2 (Ubuntu) or with the "
+                "Docker image; see SETUP.md in https://github.com/hakanotal/gromacs-vmd-mcp")
+    return None
+
+
+if platform_problem():
+    sys.stderr.write(platform_problem() + "\n")
+    raise SystemExit(1)
+
 # Setup paths
 SCRIPT_DIR = Path(__file__).parent.resolve()
 MCP_ROOT = SCRIPT_DIR.parent
@@ -43,7 +55,7 @@ from jobs.manager import job_manager  # noqa: E402
 from tools.registry import ToolRegistry  # noqa: E402
 
 SERVER_NAME = "gromacs"
-SERVER_VERSION = "2.1.0"
+SERVER_VERSION = "2.2.0"
 
 mcp = FastMCP(SERVER_NAME)
 registry = ToolRegistry(mcp)

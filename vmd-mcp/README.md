@@ -1,6 +1,6 @@
 # VMD MCP Server
 
-An MCP server that lets an AI assistant use [VMD](https://www.ks.uiuc.edu/Research/vmd/) (Visual Molecular Dynamics): render structures and trajectory frames to images without a display, compute per-frame RMSD and contacts, and open files in an interactive VMD window.
+An MCP server that lets an AI assistant use [VMD](https://www.ks.uiuc.edu/Research/vmd/) (Visual Molecular Dynamics): render structures, trajectory frames and movies without a display, compute per-frame quantities (RMSD, radius of gyration, SASA, hydrogen bonds, contacts, secondary structure), and open files in an interactive VMD window.
 
 It pairs with the GROMACS server in [`../gromacs-mcp`](../gromacs-mcp): GROMACS runs the simulation, VMD shows it.
 
@@ -8,14 +8,25 @@ It pairs with the GROMACS server in [`../gromacs-mcp`](../gromacs-mcp): GROMACS 
 |---|---|
 | `check_vmd_environment` | VMD path and version (text mode), workspace, PNG support. Run this first |
 | `list_templates` | Render styles, representations, colorings and the scripted operations |
-| `render_image` | Structure or a trajectory frame to a 512 x 512 `.png` (with Pillow) or `.tga`, headless with Tachyon |
+| `render_image` | Structure or a trajectory frame to `.png` (with Pillow) or `.tga` at any size, headless with Tachyon; a style preset or up to 8 representations in one scene |
+| `render_movie` | Trajectory frames (optionally rotating) to images and an `.mp4` (with ffmpeg) |
 | `rmsd_over_trajectory` | RMSD per frame against a reference frame, after fitting |
-| `contacts_over_trajectory` | Atom pairs within a cutoff between two selections, per frame |
+| `radius_of_gyration_over_trajectory` | Radius of gyration per frame |
+| `sasa_over_trajectory` | Solvent accessible surface area per frame, optionally for a part of the selection |
+| `hbonds_over_trajectory` | Hydrogen bonds between donor and acceptor selections per frame (needs hydrogens) |
+| `secondary_structure_over_trajectory` | STRIDE secondary structure per residue and frame, with helix, sheet, turn and coil fractions |
+| `contacts_over_trajectory` | Atom pairs within a cutoff between two selections, per frame (bonded pairs excluded) |
 | `launch_vmd_gui` | Open files in an interactive VMD window (needs a display) |
 | `list_vmd_sessions`, `close_vmd_session` | Sessions started by this server |
 | `run_vmd_tcl` | Your own Tcl. Off unless `VMD_MCP_ALLOW_TCL=1`, because Tcl can run shell commands |
 
+A prompt, `visualize_md_run`, walks through looking at a finished GROMACS run (for example `md.gro` and `md.xtc` from gromacs-mcp): an image of the last frame, RMSD, radius of gyration, secondary structure and a movie.
+
+Use `.gro` or `.pdb` as the structure for GROMACS runs: VMD reads `.gro` with `.xtc` or `.trr`, but not `.tpr`.
+
 ## Setup
+
+Linux and Windows instructions are in [SETUP.md](../SETUP.md); the macOS steps follow.
 
 You need Python 3.10+ and VMD (tested with 2.0.0a7 on macOS; 1.9.x uses the same commands). VMD is a free download from the [VMD site](https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=VMD) after registration.
 
@@ -34,12 +45,14 @@ The server looks for VMD in this order: `$VMD_MCP_VMD`, `vmd` on `PATH`, `/Appli
 | `VMD_MCP_VMD` | search as above | The vmd executable |
 | `VMD_MCP_WORKDIR` | unrestricted | Only allow reading and writing below this directory |
 | `VMD_MCP_HOME` | this folder; `<VMD_MCP_WORKDIR>/vmd_mcp` with a sandbox | Where `results/` (default outputs) go |
+| `VMD_MCP_TACHYON` | the `tachyon_*` binary next to VMD | Renderer for images of any size; without it images are 512 x 512 |
+| `VMD_MCP_FFMPEG` | `ffmpeg` on `PATH` | Assembles movies; without it `render_movie` returns the frames |
 | `VMD_MCP_ALLOW_TCL` | off | `1` enables `run_vmd_tcl` |
 | `VMD_MCP_TIMEOUT` | 600 | Default seconds before a VMD run is stopped |
 
 ## How it stays safe
 
-- VMD runs as an argument list (`vmd -dispdev text -eofexit -e script.tcl -args ...`), never through a shell.
+- VMD runs as an argument list (`vmd -dispdev text -eofexit -e script.tcl -args ...`), never through a shell. Tachyon and ffmpeg run as argument lists too: VMD only writes scene files, so its `render ... exec` path, which uses a shell, is never used.
 - The Tcl scripts are fixed text. File names, selections and numbers reach them only as `$argv` values, so they are never parsed as Tcl. Atom selections are also limited to the characters the selection language needs.
 - Representations and colorings come from a fixed list.
 - Paths are resolved, symlinks included, and with `VMD_MCP_WORKDIR` set they must stay inside it.

@@ -77,6 +77,11 @@ class TestRegistration:
         for tool in asyncio.run(run()):
             assert tool.description and len(tool.description) > 30, tool.name
 
+    def test_windows_gets_a_clear_message(self):
+        # the job manager needs POSIX; native Windows used to fail with "No module named fcntl"
+        assert "WSL2" in server.platform_problem("win32") and "Docker" in server.platform_problem("win32")
+        assert server.platform_problem("linux") is None and server.platform_problem("darwin") is None
+
     def test_server_identity(self):
         assert server.SERVER_NAME == "gromacs"
         info = server.get_server_info()

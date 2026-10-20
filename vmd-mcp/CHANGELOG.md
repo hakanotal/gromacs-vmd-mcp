@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0 (repository v1.1)
+
+- `render_image` takes `width` and `height` again: VMD writes a Tachyon scene and the server renders it with the `tachyon` binary VMD ships (`-res`), as an argument list. The zoom adapts to the aspect ratio so the scene fits, and `zoom` magnifies on top of it. Without Tachyon, images stay 512 x 512.
+- Several representations in one image (`representations`, up to 8), and presets built from them (`protein_ligand`, `solvated`, `all_vdw`).
+- `render_movie`: frames with an optional rotation, rendered by Tachyon and assembled into an `.mp4` by ffmpeg when present, with a frame cap.
+- New analyses: `radius_of_gyration_over_trajectory`, `sasa_over_trajectory`, `hbonds_over_trajectory`, `secondary_structure_over_trajectory` (STRIDE, with fractions).
+- The prompt `visualize_md_run` for runs from gromacs-mcp.
+- `launch_vmd_gui` kept no window open: VMD reads commands from its console and quit at the end of the closed input it was given. It now gets a pipe that stays open, and `close_vmd_session` sends `quit` before signalling.
+- A `.tpr` given as the structure gets an error that points to the `.gro` (VMD cannot read `.tpr`).
+- Finds VMD in the Linux install locations (`/usr/local/bin/vmd`, `/opt/vmd*/bin/vmd`) and the Windows installer's folders (`C:\Program Files\University of Illinois\VMD\vmd.exe` and similar).
+- SETUP.md at the repository root covers Linux and Windows.
+
 ## 1.0.0
 
 First release, derived from an MIT-licensed prototype ("mcp-gmx-vmd") that combined VMD and GROMACS tools. The prototype did not work with Claude and was unsafe, so this version keeps its VMD ideas (the Tcl templates for loading, representations, rendering, RMSD and contacts, the style presets, and launching VMD sessions) and rebuilds the rest.
