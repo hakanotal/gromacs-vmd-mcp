@@ -1,0 +1,36 @@
+                 :-) GROMACS - gmx energy, 2026.4-Homebrew (-:
+
+Executable:   /opt/homebrew/bin/../Cellar/gromacs/2026.4/bin/gmx
+Data prefix:  /opt/homebrew/bin/../Cellar/gromacs/2026.4
+Working dir:  /Users/hakan/Desktop/rana-gromacs/gromacs_mcp
+Command line:
+  gmx energy -f ../demo/npt.edr
+
+Opened ../demo/npt.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  LJ-(SR)          2  Coulomb-(SR)     3  Coul.-recip.     4  Potential     
+  5  Kinetic-En.      6  Total-Energy     7  Conserved-En.    8  Temperature   
+  9  Pressure        10  Box-X           11  Box-Y           12  Box-Z         
+ 13  Volume          14  Density         15  pV              16  Enthalpy      
+ 17  Vir-XX          18  Vir-XY          19  Vir-XZ          20  Vir-YX        
+ 21  Vir-YY          22  Vir-YZ          23  Vir-ZX          24  Vir-ZY        
+ 25  Vir-ZZ          26  Pres-XX         27  Pres-XY         28  Pres-XZ       
+ 29  Pres-YX         30  Pres-YY         31  Pres-YZ         32  Pres-ZX       
+ 33  Pres-ZY         34  Pres-ZZ         35  #Surf*SurfTen   36  T-System      
+ 37  Lamb-System   
+
+
+-------------------------------------------------------
+Program:     gmx energy, version 2026.4-Homebrew
+Source file: src/gromacs/gmxana/gmx_energy.cpp (line 314)
+
+Fatal error:
+No energy terms selected
+
+For more information and tips for troubleshooting, please check the GROMACS
+website at https://manual.gromacs.org/current/user-guide/run-time-errors.html
+-------------------------------------------------------

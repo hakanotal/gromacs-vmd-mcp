@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "gromacs": {
+      "type": "stdio",
+      "command": "/path/to/gromacs-vmd-mcp/gromacs-mcp/env/bin/python",
+      "args": ["/path/to/gromacs-vmd-mcp/gromacs-mcp/src/server.py"],
+      "env": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+      }
+    },
+    "vmd": {
+      "type": "stdio",
+      "command": "/path/to/gromacs-vmd-mcp/vmd-mcp/env/bin/python",
+      "args": ["/path/to/gromacs-vmd-mcp/vmd-mcp/src/server.py"],
+      "env": {
+        "VMD_MCP_VMD": "/Applications/VMD.app/Contents/vmd2/lib/vmd_MACOSXARM64"
+      }
+    }
+  }
+}

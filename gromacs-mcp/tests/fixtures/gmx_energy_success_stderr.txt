@@ -1,0 +1,27 @@
+                 :-) GROMACS - gmx energy, 2026.4-Homebrew (-:
+
+Executable:   /opt/homebrew/bin/../Cellar/gromacs/2026.4/bin/gmx
+Data prefix:  /opt/homebrew/bin/../Cellar/gromacs/2026.4
+Working dir:  /Users/hakan/Desktop/rana-gromacs/demo
+Command line:
+  gmx energy -f md.edr -o e.xvg
+
+Opened md.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  LJ-(SR)          2  Disper.-corr.    3  Coulomb-(SR)     4  Coul.-recip.  
+  5  Potential        6  Kinetic-En.      7  Total-Energy     8  Conserved-En. 
+  9  Temperature     10  Pres.-DC        11  Pressure        12  Vir-XX        
+ 13  Vir-XY          14  Vir-XZ          15  Vir-YX          16  Vir-YY        
+ 17  Vir-YZ          18  Vir-ZX          19  Vir-ZY          20  Vir-ZZ        
+ 21  Pres-XX         22  Pres-XY         23  Pres-XZ         24  Pres-YX       
+ 25  Pres-YY         26  Pres-YZ         27  Pres-ZX         28  Pres-ZY       
+ 29  Pres-ZZ         30  #Surf*SurfTen   31  T-System        32  Lamb-System   
+
+Reading energy frame      0 time    0.000         Reading energy frame      1 time    0.100         Reading energy frame      2 time    0.200         Reading energy frame      3 time    0.300         Reading energy frame      4 time    0.400         Reading energy frame      5 time    0.500         Reading energy frame      6 time    0.600         Reading energy frame      7 time    0.700         Reading energy frame      8 time    0.800         Reading energy frame      9 time    0.900         Reading energy frame     10 time    1.000         Last energy frame read 10 time    1.000         
+
+GROMACS reminds you: "Not to get technical... but according to chemistry, alcohol is a solution." (Anonymous)
+

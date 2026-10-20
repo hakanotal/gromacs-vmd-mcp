@@ -1,0 +1,58 @@
+                 :-) GROMACS - gmx energy, 2026.4-Homebrew (-:
+
+Executable:   /opt/homebrew/bin/../Cellar/gromacs/2026.4/bin/gmx
+Data prefix:  /opt/homebrew/bin/../Cellar/gromacs/2026.4
+Working dir:  /Users/hakan/Desktop/rana-gromacs/demo
+Command line:
+  gmx energy -f eg.edr
+
+Opened eg.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  LJ-(SR)          2  Disper.-corr.    3  Coulomb-(SR)     4  Coul.-recip.  
+  5  Potential        6  Kinetic-En.      7  Total-Energy     8  Conserved-En. 
+  9  Temperature     10  Pres.-DC        11  Pressure        12  Vir-XX        
+ 13  Vir-XY          14  Vir-XZ          15  Vir-YX          16  Vir-YY        
+ 17  Vir-YZ          18  Vir-ZX          19  Vir-ZY          20  Vir-ZZ        
+ 21  Pres-XX         22  Pres-XY         23  Pres-XZ         24  Pres-YX       
+ 25  Pres-YY         26  Pres-YZ         27  Pres-ZX         28  Pres-ZY       
+ 29  Pres-ZZ         30  #Surf*SurfTen   31  Coul-SR:AA-AA   32  LJ-SR:AA-AA   
+ 33  Coul-SR:AA-BB   34  LJ-SR:AA-BB     35  Coul-SR:AA-CC   36  LJ-SR:AA-CC   
+ 37  Coul-SR:AA-DD   38  LJ-SR:AA-DD     39  Coul-SR:AA-EE   40  LJ-SR:AA-EE   
+ 41  Coul-SR:AA-FF   42  LJ-SR:AA-FF     43  Coul-SR:AA-GG   44  LJ-SR:AA-GG   
+ 45  Coul-SR:AA-HH   46  LJ-SR:AA-HH     47  Coul-SR:AA-IJK  48  LJ-SR:AA-IJK  
+ 49  Coul-SR:BB-BB   50  LJ-SR:BB-BB     51  Coul-SR:BB-CC   52  LJ-SR:BB-CC   
+ 53  Coul-SR:BB-DD   54  LJ-SR:BB-DD     55  Coul-SR:BB-EE   56  LJ-SR:BB-EE   
+ 57  Coul-SR:BB-FF   58  LJ-SR:BB-FF     59  Coul-SR:BB-GG   60  LJ-SR:BB-GG   
+ 61  Coul-SR:BB-HH   62  LJ-SR:BB-HH     63  Coul-SR:BB-IJK  64  LJ-SR:BB-IJK  
+ 65  Coul-SR:CC-CC   66  LJ-SR:CC-CC     67  Coul-SR:CC-DD   68  LJ-SR:CC-DD   
+ 69  Coul-SR:CC-EE   70  LJ-SR:CC-EE     71  Coul-SR:CC-FF   72  LJ-SR:CC-FF   
+ 73  Coul-SR:CC-GG   74  LJ-SR:CC-GG     75  Coul-SR:CC-HH   76  LJ-SR:CC-HH   
+ 77  Coul-SR:CC-IJK  78  LJ-SR:CC-IJK    79  Coul-SR:DD-DD   80  LJ-SR:DD-DD   
+ 81  Coul-SR:DD-EE   82  LJ-SR:DD-EE     83  Coul-SR:DD-FF   84  LJ-SR:DD-FF   
+ 85  Coul-SR:DD-GG   86  LJ-SR:DD-GG     87  Coul-SR:DD-HH   88  LJ-SR:DD-HH   
+ 89  Coul-SR:DD-IJK  90  LJ-SR:DD-IJK    91  Coul-SR:EE-EE   92  LJ-SR:EE-EE   
+ 93  Coul-SR:EE-FF   94  LJ-SR:EE-FF     95  Coul-SR:EE-GG   96  LJ-SR:EE-GG   
+ 97  Coul-SR:EE-HH   98  LJ-SR:EE-HH     99  Coul-SR:EE-IJK 100  LJ-SR:EE-IJK  
+101  Coul-SR:FF-FF  102  LJ-SR:FF-FF    103  Coul-SR:FF-GG  104  LJ-SR:FF-GG   
+105  Coul-SR:FF-HH  106  LJ-SR:FF-HH    107  Coul-SR:FF-IJK 108  LJ-SR:FF-IJK  
+109  Coul-SR:GG-GG  110  LJ-SR:GG-GG    111  Coul-SR:GG-HH  112  LJ-SR:GG-HH   
+113  Coul-SR:GG-IJK 114  LJ-SR:GG-IJK   115  Coul-SR:HH-HH  116  LJ-SR:HH-HH   
+117  Coul-SR:HH-IJK                     118  LJ-SR:HH-IJK                      
+119  Coul-SR:IJK-IJK                    120  LJ-SR:IJK-IJK                     
+121  T-System       122  Lamb-System   
+
+
+-------------------------------------------------------
+Program:     gmx energy, version 2026.4-Homebrew
+Source file: src/gromacs/gmxana/gmx_energy.cpp (line 314)
+
+Fatal error:
+No energy terms selected
+
+For more information and tips for troubleshooting, please check the GROMACS
+website at https://manual.gromacs.org/current/user-guide/run-time-errors.html
+-------------------------------------------------------

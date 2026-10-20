@@ -1,0 +1,27 @@
+                 :-) GROMACS - gmx grompp, 2026.4-Homebrew (-:
+
+Executable:   /opt/homebrew/bin/../Cellar/gromacs/2026.4/bin/gmx
+Data prefix:  /opt/homebrew/bin/../Cellar/gromacs/2026.4
+Working dir:  /private/tmp/claude-501/-Users-hakan-Desktop-rana-gromacs/d4d89907-67c2-4d89-8cc9-ea8e286294e5/scratchpad/ex
+Command line:
+  gmx grompp -f em.mdp -c water.gro -p topol.top -o /tmp/x.tpr
+
+Generating 1-4 interactions: fudge = 0.5
+
+ERROR 1 [file topol.top, line 8]:
+  ERROR: The cut-off length is longer than half the shortest box vector or
+  longer than the smallest box diagonal element. Increase the box size or
+  decrease rlist.
+
+
+
+-------------------------------------------------------
+Program:     gmx grompp, version 2026.4-Homebrew
+Source file: src/gromacs/gmxpreprocess/grompp.cpp (line 2419)
+
+Fatal error:
+There was 1 error in input file(s)
+
+For more information and tips for troubleshooting, please check the GROMACS
+website at https://manual.gromacs.org/current/user-guide/run-time-errors.html
+-------------------------------------------------------

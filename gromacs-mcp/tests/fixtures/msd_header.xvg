@@ -1,0 +1,14 @@
+@    title "Mean Squared Displacement"
+@    xaxis  label "tau (ps)"
+@    yaxis  label "MSD (nm\\S2\\N)"
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "D[   name OW] = 2.4942 (+/- 0.03) (1e-5 cm^2/s)"
+      0.000          0
+      1.000   0.021036
+      2.000  0.0355922
+      3.000  0.0524704
+      4.000  0.0652502

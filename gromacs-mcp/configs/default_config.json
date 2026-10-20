@@ -1,0 +1,33 @@
+{
+  "_description": "Defaults for the scripts in scripts/. Pass this file (or a copy with only the values you change) with --config; each script reads its own sections and ignores the rest. Server settings are environment variables, listed under _environment.",
+  "execution": {
+    "timeout": 300,
+    "working_directory": null,
+    "step_timeout": 600,
+    "mdrun_timeout": 3600,
+    "continue_on_error": false
+  },
+  "simulation": {
+    "deffnm": "md",
+    "pin": "auto",
+    "checkpoint_minutes": 15
+  },
+  "analysis": {
+    "timeout": 60,
+    "include_raw_dump": false,
+    "output_format": "text"
+  },
+  "_environment": {
+    "GMX_MCP_GMX": "path to gmx (default: gmx, then gmx_mpi on PATH)",
+    "GMX_MCP_WORKDIR": "only allow paths below this directory (default: unrestricted)",
+    "GMX_MCP_HOME": "where jobs/, runs/, results/ and logs/ are created (default: repository root, or <GMX_MCP_WORKDIR>/gromacs_mcp when a sandbox is set)",
+    "GMX_MCP_JOBS_DIR": "job records (default: $GMX_MCP_HOME/jobs)",
+    "GMX_MCP_RESULTS_DIR": "default output folder for tools (default: $GMX_MCP_HOME/results)",
+    "GMX_MCP_LOG_DIR": "log folder (default: $GMX_MCP_HOME/logs)",
+    "GMX_MCP_MAX_JOBS": "simulations running at once (default: 2)",
+    "GMX_MCP_MIN_FREE_MB": "refuse new jobs below this free disk space (default: 500)",
+    "GMX_MCP_MAX_CHARS": "longer text fields in results are shortened (default: 20000)",
+    "GMX_MCP_RUNS_DIR": "default job output folders (default: $GMX_MCP_HOME/runs)",
+    "GMX_MCP_SCRIPT_DIRS": "extra folders jobs may run scripts from, besides scripts/ (os.pathsep separated)"
+  }
+}

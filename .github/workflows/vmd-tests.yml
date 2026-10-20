@@ -1,0 +1,29 @@
+name: vmd-mcp tests
+
+on:
+  push:
+    branches: [main]
+    paths: ["vmd-mcp/**", ".github/workflows/vmd-tests.yml"]
+  pull_request:
+    paths: ["vmd-mcp/**", ".github/workflows/vmd-tests.yml"]
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: vmd-mcp
+
+jobs:
+  # A fake vmd stands in for VMD, which cannot be downloaded without registration.
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements-dev.txt pillow
+      - run: python -m pytest -q

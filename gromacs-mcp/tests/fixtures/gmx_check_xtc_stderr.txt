@@ -1,0 +1,25 @@
+                  :-) GROMACS - gmx check, 2026.4-Homebrew (-:
+
+Executable:   /opt/homebrew/bin/../Cellar/gromacs/2026.4/bin/gmx
+Data prefix:  /opt/homebrew/bin/../Cellar/gromacs/2026.4
+Working dir:  /Users/hakan/Desktop/rana-gromacs/gromacs_mcp
+Command line:
+  gmx check -f ../demo/npt.xtc
+
+Reading frame       0 time    0.000   
+# Atoms  1530
+Precision 0.001 (nm)
+Reading frame       1 time    1.000   Reading frame       2 time    2.000   Reading frame       3 time    3.000   Reading frame       4 time    4.000   Reading frame       5 time    5.000   Reading frame       6 time    6.000   Reading frame       7 time    7.000   Reading frame       8 time    8.000   Reading frame       9 time    9.000   Reading frame      10 time   10.000   Reading frame      11 time   11.000   Reading frame      12 time   12.000   Reading frame      13 time   13.000   Reading frame      14 time   14.000   Reading frame      15 time   15.000   Reading frame      16 time   16.000   Reading frame      17 time   17.000   Reading frame      18 time   18.000   Reading frame      19 time   19.000   Reading frame      20 time   20.000   Reading frame      30 time   30.000   Reading frame      40 time   40.000   Reading frame      50 time   50.000   Last frame         50 time   50.000   
+
+
+Item        #frames Timestep (ps)
+Step            51    1
+Time            51    1
+Lambda           0
+Coords          51    1
+Velocities       0
+Forces           0
+Box             51    1
+
+GROMACS reminds you: "No One Could Foresee the End That Came So Fast" (Slayer)
+

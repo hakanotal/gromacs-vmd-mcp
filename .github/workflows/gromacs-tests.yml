@@ -1,0 +1,80 @@
+name: gromacs-mcp tests
+
+on:
+  push:
+    branches: [main]
+    paths: ["gromacs-mcp/**", ".github/workflows/gromacs-tests.yml"]
+  pull_request:
+    paths: ["gromacs-mcp/**", ".github/workflows/gromacs-tests.yml"]
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: gromacs-mcp
+
+jobs:
+  # Parsers, job manager, wrapper (fake gmx), schema. Tests that need GROMACS are skipped.
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  # Everything, including real simulations, against GROMACS from conda-forge.
+  gromacs-linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+        working-directory: gromacs-mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: gmx
+          create-args: >-
+            python=3.12
+            gromacs
+            pip
+          init-shell: bash
+      - run: pip install -r requirements-dev.txt
+      - run: gmx --version | head -12
+      - run: python scripts/make_example_data.py --tpr-only
+      - run: python -m pytest -v
+
+  # Everything against GROMACS from Homebrew.
+  gromacs-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: brew install gromacs
+      - run: pip install -r requirements-dev.txt
+      - run: gmx --version | head -12
+      - run: python scripts/make_example_data.py --tpr-only
+      - run: python -m pytest -v
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t gromacs-mcp:ci .
+      - name: Smoke test the image (non-root user, analyze the bundled example)
+        run: |
+          docker run --rm --user 12345:12345 gromacs-mcp:ci python -c "
+          import sys; sys.path[:0] = ['src', 'scripts']
+          import server
+          r = server.analyze_tpr('examples/data/sample.tpr')
+          assert r['status'] == 'success', r
+          print('ok', r['tpr_info']['natoms'])
+          "

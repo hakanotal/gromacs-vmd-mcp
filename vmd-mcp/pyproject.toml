@@ -1,0 +1,22 @@
+[project]
+name = "vmd-mcp"
+version = "1.0.0"
+description = "MCP server exposing VMD: headless rendering, trajectory analysis and interactive sessions"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp>=4.1,<5",
+]
+
+[project.optional-dependencies]
+png = ["pillow>=10"]
+dev = ["pytest>=8"]
+
+# Runs from a checkout (src/server.py), like gromacs-mcp.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"

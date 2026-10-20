@@ -1,0 +1,4 @@
+x
+Inconsistency in user input:
+-dt cannot be larger than -trestart (default 10 ps).
+For more information and tips for troubleshooting, please check the GROMACS

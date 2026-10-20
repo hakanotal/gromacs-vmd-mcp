@@ -1,0 +1,27 @@
+; nvt: Constant volume equilibration with V-rescale thermostat and generated velocities
+cutoff-scheme        = Verlet
+pbc                  = xyz
+coulombtype          = PME
+rcoulomb             = 1.0
+rvdw                 = 1.0
+DispCorr             = EnerPres
+integrator           = md
+dt                   = 0.002
+nsteps               = 500
+nstcomm              = 100
+nstlog               = 100
+nstenergy            = 50
+nstcalcenergy        = 50
+nstxout-compressed   = 50
+compressed-x-grps    = System
+constraints          = h-bonds
+constraint-algorithm = lincs
+tcoupl               = V-rescale
+tc-grps              = System
+tau-t                = 0.1
+ref-t                = 300
+continuation         = no
+gen-vel              = yes
+gen-temp             = 300
+gen-seed             = 42
+pcoupl               = no

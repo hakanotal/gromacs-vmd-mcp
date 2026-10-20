@@ -1,0 +1,40 @@
+                 :-) GROMACS - gmx energy, 2026.4-Homebrew (-:
+
+Executable:   /opt/homebrew/bin/../Cellar/gromacs/2026.4/bin/gmx
+Data prefix:  /opt/homebrew/bin/../Cellar/gromacs/2026.4
+Working dir:  /Users/hakan/Desktop/rana-gromacs/demo
+Command line:
+  gmx energy -f npt.edr -o energy.xvg
+
+Opened npt.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  LJ-(SR)          2  Coulomb-(SR)     3  Coul.-recip.     4  Potential     
+  5  Kinetic-En.      6  Total-Energy     7  Conserved-En.    8  Temperature   
+  9  Pressure        10  Box-X           11  Box-Y           12  Box-Z         
+ 13  Volume          14  Density         15  pV              16  Enthalpy      
+ 17  Vir-XX          18  Vir-XY          19  Vir-XZ          20  Vir-YX        
+ 21  Vir-YY          22  Vir-YZ          23  Vir-ZX          24  Vir-ZY        
+ 25  Vir-ZZ          26  Pres-XX         27  Pres-XY         28  Pres-XZ       
+ 29  Pres-YX         30  Pres-YY         31  Pres-YZ         32  Pres-ZX       
+ 33  Pres-ZY         34  Pres-ZZ         35  #Surf*SurfTen   36  T-System      
+ 37  Lamb-System   
+
+Reading energy frame      0 time    0.000         Reading energy frame      1 time    0.200         Reading energy frame      2 time    0.400         Reading energy frame      3 time    0.600         Reading energy frame      4 time    0.800         Reading energy frame      5 time    1.000         Reading energy frame      6 time    1.200         Reading energy frame      7 time    1.400         Reading energy frame      8 time    1.600         Reading energy frame      9 time    1.800         Reading energy frame     10 time    2.000         Reading energy frame     11 time    2.200         Reading energy frame     12 time    2.400         Reading energy frame     13 time    2.600         Reading energy frame     14 time    2.800         Reading energy frame     15 time    3.000         Reading energy frame     16 time    3.200         Reading energy frame     17 time    3.400         Reading energy frame     18 time    3.600         Reading energy frame     19 time    3.800         Reading energy frame     20 time    4.000         Reading energy frame     30 time    6.000         Reading energy frame     40 time    8.000         Reading energy frame     50 time   10.000         Reading energy frame     60 time   12.000         Reading energy frame     70 time   14.000         Reading energy frame     80 time   16.000         Reading energy frame     90 time   18.000         Reading energy frame    100 time   20.000         Reading energy frame    110 time   22.000         Reading energy frame    120 time   24.000         Reading energy frame    130 time   26.000         Reading energy frame    140 time   28.000         Reading energy frame    150 time   30.000         Reading energy frame    160 time   32.000         Reading energy frame    170 time   34.000         Reading energy frame    180 time   36.000         Reading energy frame    190 time   38.000         Reading energy frame    200 time   40.000         Last energy frame read 250 time   50.000         
+
+GROMACS reminds you: "There's a limit to how many times you can read how great you are and what an inspiration you are, but I'm not there yet." (Randy Pausch)
+
+
+Statistics over 25001 steps [ 0.0000 through 50.0000 ps ], 5 data sets
+All statistics are over 251 points (frames)
+
+Energy                      Average   Err.Est.       RMSD  Tot-Drift
+-------------------------------------------------------------------------------
+Potential                  -23697.2        8.7    274.558    20.9108  (kJ/mol)
+Temperature                 299.985       0.83    8.78849    4.81859  (K)
+Pressure                    80.8457         71    630.872    29.3319  (bar)
+Volume                      15.3139      0.059   0.182693  0.0256662  (nm^3)
+Density                     996.415        3.9    11.9501   -1.72644  (kg/m^3)

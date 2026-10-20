@@ -1,0 +1,21 @@
+# Local working data and logs
+*.log
+results/
+demo/
+
+# Local MCP client configuration (absolute paths); see .mcp.json.example
+.mcp.json
+
+# Python
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+.claude/
